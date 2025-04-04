@@ -24,7 +24,7 @@ const AudioPlayer = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [response, setResponse] = useState<any>(response_test);
   
-  const resLinks = Object.entries(response['downloads']); 
+  const resLinks = Object.entries(response['downloads'])
   console.log('resLinks', resLinks)
   const wavesurferRef = useRef<{ wavesurfer1: WaveSurfer | null, wavesurfer2: WaveSurfer | null }>({
     wavesurfer1: null,
