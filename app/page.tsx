@@ -1,103 +1,169 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+const response_test = {
+  downloads: {
+    instrumental:
+      "https://rendered-stem-bucket.s3.us-west-2.amazonaws.com/stems/instrumental_Smino_-_Polynesian_Official_Music_Video.mp3",
+    vocals:
+      "https://rendered-stem-bucket.s3.us-west-2.amazonaws.com/stems/vocals_Smino_-_Polynesian_Official_Music_Video.mp3",
+  },
+  message: "Separation complete",
+  original_file:
+    "https://rendered-stem-bucket.s3.us-west-2.amazonaws.com/originals/Smino_-_Polynesian_Official_Music_Video.mp3",
+  processing_time: 149.065119561,
+  separation_time: 146.897797809,
+};
+
+import React, { useEffect, useRef, useState } from 'react';
+import WaveSurfer from 'wavesurfer.js';
+
+const AudioPlayer = () => {
+  const waveformRef1 = useRef<HTMLDivElement>(null);
+  const waveformRef2 = useRef<HTMLDivElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [response, setResponse] = useState<any>(response_test);
+  
+  const resLinks = Object.entries(response['downloads']); 
+  console.log('resLinks', resLinks)
+  const wavesurferRef = useRef<{ wavesurfer1: WaveSurfer | null, wavesurfer2: WaveSurfer | null }>({
+    wavesurfer1: null,
+    wavesurfer2: null
+  });
+
+  // const handleMute1 = () => {
+  //   if (wavesurferRef.current.wavesurfer1) {
+  //     wavesurferRef.current.wavesurfer1.setMuted(!isMuted1);
+  //     setIsMuted1(!isMuted1);
+  //   }
+  // };
+
+  // const handleMute2 = () => {
+  //   if (wavesurferRef.current.wavesurfer2) {
+  //     wavesurferRef.current.wavesurfer2.setMuted(!isMuted2);
+  //     setIsMuted2(!isMuted2);
+  //   }
+  // };
+
+  const handlePlayPause = () => {
+    if (wavesurferRef.current.wavesurfer1 && wavesurferRef.current.wavesurfer2) {
+      if (isPlaying) {
+        wavesurferRef.current.wavesurfer1.pause();
+        wavesurferRef.current.wavesurfer2.pause();
+      } else {
+        wavesurferRef.current.wavesurfer1.play();
+        wavesurferRef.current.wavesurfer2.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleSeek = (position: number) => {
+    console.log('Seeking to position:', position);
+    if (wavesurferRef.current.wavesurfer1 && wavesurferRef.current.wavesurfer2) {
+      wavesurferRef.current.wavesurfer1.seekTo(position);
+      wavesurferRef.current.wavesurfer2.seekTo(position);
+      setCurrentTime(position);
+    }
+  };
+
+
+  useEffect(() => {
+    if (!waveformRef1.current || !waveformRef2.current) return;
+    
+    const wavesurfer1 = WaveSurfer.create({
+      container: waveformRef1.current,
+      waveColor: '#4F4A85',
+      progressColor: '#383351',
+      height: 100,
+      cursorWidth: 1,
+      interact: true
+    });
+
+    const wavesurfer2 = WaveSurfer.create({
+      container: waveformRef2.current,
+      waveColor: '#4F4A85',
+      progressColor: '#383351',
+      height: 100,
+      cursorWidth: 1,
+      interact: true
+    });
+
+    wavesurferRef.current = { wavesurfer1, wavesurfer2 };
+
+    // Add click handlers for seeking
+    wavesurfer1.on('click', handleSeek);
+    wavesurfer2.on('click', handleSeek);
+
+    // Update time state
+    wavesurfer1.on('audioprocess', (time: number) => {
+      setCurrentTime(time);
+    });
+
+    // Load audio files
+    wavesurfer1.load('https://rendered-stem-bucket.s3.us-west-2.amazonaws.com/stems/vocals_Smino_-_Polynesian_Official_Music_Video.mp3');
+    wavesurfer2.load('https://rendered-stem-bucket.s3.us-west-2.amazonaws.com/stems/instrumental_Smino_-_Polynesian_Official_Music_Video.mp3');
+
+    // Cleanup on unmount
+    return () => {
+      if (wavesurfer1) {
+        wavesurfer1.destroy();
+      }
+      if (wavesurfer2) {
+        wavesurfer2.destroy();
+      }
+    }
+  }, []);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div>
+      <div>
+        <div className='flex flex-row items-center gap-2 justify-between'>
+          <div ref={waveformRef1} className="max-w-[30rem] flex-1"></div>
+          <button 
+            // onClick={handleMute1}
+            style={{
+              padding: '5px 10px',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className='flex flex-row items-center gap-2 justify-between'>
+          <div ref={waveformRef2} className="max-w-[30rem] flex-1"></div>
+          <button 
+            // onClick={handleMute2}
+            style={{
+              padding: '5px 10px',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+          </button>
+        </div>
+      </div>
+      <div>Current Time: {Math.floor(currentTime)}s</div>
+      <button 
+        onClick={handlePlayPause}
+        style={{
+          padding: '10px 20px',
+          margin: '10px 0',
+          backgroundColor: '#4F4A85',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer'
+        }}
+      >
+        {isPlaying ? 'Pause' : 'Play'}
+      </button>
     </div>
   );
-}
+};
+
+export default AudioPlayer;
